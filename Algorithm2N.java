@@ -1,4 +1,4 @@
-public class Algorithm2N implements IAlgorithm {
+public class Algorithm2N extends Algorithm {
 
     private long l = 0L;
 
@@ -17,4 +17,5 @@ public class Algorithm2N implements IAlgorithm {
     private int aux(int n) {
         return (n < 2) ? n : aux(n - 1) + aux(n - 2);
     }
+
 }

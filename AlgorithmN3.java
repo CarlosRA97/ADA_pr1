@@ -1,4 +1,4 @@
-public class AlgorithmN3 implements IAlgorithm {
+public class AlgorithmN3 extends Algorithm {
 
     private long l = 0L;
 
@@ -19,4 +19,5 @@ public class AlgorithmN3 implements IAlgorithm {
             }
         }
     }
+
 }

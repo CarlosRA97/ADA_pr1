@@ -1,4 +1,4 @@
-public class AlgorithmLogN implements IAlgorithm {
+public class AlgorithmLogN extends Algorithm {
 
     private long l = 0L;
 
@@ -15,4 +15,5 @@ public class AlgorithmLogN implements IAlgorithm {
             l += i;
         }
     }
+
 }

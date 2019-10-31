@@ -1,25 +1,18 @@
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-class Testing {
+class Config {
 
     private String[] args;
-
     private List<String> log;
 
     // Config
-    private Map<String, Boolean> config;
-    private boolean _a = true;
-    private boolean _l = false;
-    private boolean _t = false;
+    private Map<String, CfgArguments> cfg;
 
-    Testing(String[] args) {
+    Config(String[] args) {
         this.args = args;
         log = new LinkedList<>();
-
+        cfg = new HashMap<>();
 
         loadSettings();
     }
@@ -28,38 +21,86 @@ class Testing {
         Argumentos:
             -l : Muestra el log en la consola
             -t : Ejecuta todas las pruebas de todos los algoritmos conocidos
+            -n : 'n' que se utiliza para realizar la prueba
+            -1 <algoritmo, ...> : Selecciona el/los algoritmos a ejecutar
 
      */
     private void loadSettings() {
         for (int i = 0; i < args.length; i++) {
             switch (args[i].toLowerCase()) {
                 case "-l":
-                    _l = true;
+                    cfg.put(args[i], new CfgArguments(true));
                     break;
                 case "-t":
-                    _t = true;
+                    cfg.put(args[i], new CfgArguments(true));
+                    break;
+                case "-n":
+                    cfg.put(args[i], new CfgArguments<>(true, getArguments(i)));
+                    break;
+                case "-1":
+                    cfg.put(args[i], new CfgArguments<>(true, getArguments(i)));
                     break;
             }
         }
     }
 
+    private Object[] getArguments(int i) {
+        return Arrays.copyOfRange(args, i + 1, auxCheckArg(args, i));
+    }
+
+    private int auxCheckArg(String[] args, int index) {
+        for (int i = index + 1; i < args.length; i++) {
+            if (args[i].contains("-")) {
+                return i;
+            }
+        }
+        return args.length;
+    }
+
+    boolean enabled(String arg) {
+        return cfg.containsKey(arg) && cfg.get(arg).enabled;
+    }
+
+    List arguments(String arg) {
+        if (cfg.containsKey(arg)) {
+            return cfg.get(arg).args;
+        } else {
+            return null;
+        }
+    }
+
+    Object argument(String arg) {
+        return arguments(arg).get(0);
+    }
 
     void writeLog(String line) {
         writeLog(line, logType.INFO);
     }
 
     void writeLog(String line, logType type) {
-        Date now = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("[dd/MM/yy HH:mm:ss,S] - ");
-        String text = sdf.format(now) + line;
-        log.add(text);
+        writeLog(line, type, null);
+    }
 
-        if (_l && (type == logType.INFO || type == logType.ERROR)) {
-            System.out.println(text);
+    void writeLog(String line, logType type, List<String> list) {
+        Date now = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("[dd/MM/yy HH:mm:ss,S]\t- ");
+        StringBuilder sb = new StringBuilder(sdf.format(now) + line);
+        if (list != null) {
+            for (String elem : list) {
+                sb.append("\t - ").append(elem);
+                if (!elem.equalsIgnoreCase(list.get(list.size()-1))) {
+                    sb.append('\n');
+                }
+            }
+        }
+        log.add(sb.toString());
+
+        if (enabled("-l") && (type == logType.INFO || type == logType.ERROR)) {
+            System.out.println(sb.toString());
         }
     }
 
-    String readLog() {
+    String readFullLog() {
         StringBuilder sb = new StringBuilder();
         for (String line : log) {
             sb.append(line).append("\n");
@@ -68,6 +109,22 @@ class Testing {
     }
 
     public enum logType {INFO, ERROR, SYSTEM}
+
+    private static class CfgArguments<T> {
+        private boolean enabled;
+        private List<T> args = null;
+
+        CfgArguments(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        @SafeVarargs
+        CfgArguments(boolean enabled, T... args) {
+            this(enabled);
+            this.args = new LinkedList<T>();
+            this.args.addAll(Arrays.asList(args));
+        }
+    }
 
 
 }

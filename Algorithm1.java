@@ -1,4 +1,4 @@
-public class Algorithm1 implements IAlgorithm {
+public class Algorithm1 extends Algorithm {
 
     private long l = 0L;
 
@@ -13,4 +13,5 @@ public class Algorithm1 implements IAlgorithm {
     public void f(int n) {
         l = n;
     }
+
 }

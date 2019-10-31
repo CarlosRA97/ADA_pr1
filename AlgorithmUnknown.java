@@ -1,9 +1,9 @@
-public class AlgorithmUnknown implements IAlgorithm {
+public class AlgorithmUnknown extends Algorithm {
 
     private long l = 0L;
 
     public String getName() {
-        return "Algoritmo";
+        return "Unknown Algorithm";
     }
 
     public long getL() {
