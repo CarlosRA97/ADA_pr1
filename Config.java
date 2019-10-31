@@ -2,6 +2,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 class Testing {
 
@@ -10,12 +11,15 @@ class Testing {
     private List<String> log;
 
     // Config
+    private Map<String, Boolean> config;
+    private boolean _a = true;
     private boolean _l = false;
     private boolean _t = false;
 
     Testing(String[] args) {
         this.args = args;
         log = new LinkedList<>();
+
 
         loadSettings();
     }
