@@ -10,7 +10,7 @@ public class Algorithm1 implements IAlgorithm {
         return l;
     }
 
-    public synchronized void f(int n) {
+    public void f(int n) {
         l = n;
     }
 }

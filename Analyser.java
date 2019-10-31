@@ -1,4 +1,14 @@
-public class Analyser {
+import java.time.Instant;
+import java.time.ZoneOffset;
+
+class Analyser {
+
+    private Testing testcfg;
+
+
+    Analyser(Testing testcfg) {
+        this.testcfg = testcfg;
+    }
 
     private String closer(double ratio) {
         if (ratio < 0.2f) {
@@ -18,6 +28,12 @@ public class Analyser {
         } else {
             return "NF";
         }
+    }
+
+
+    void start() {
+        testcfg.writeLog("Started", Testing.logType.SYSTEM);
+
     }
 
     // https://www.codejava.net/java-core/concurrency/java-concurrency-executing-value-returning-tasks-with-callable-and-future
