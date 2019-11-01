@@ -10,7 +10,7 @@ public class AlgorithmLogN extends Algorithm {
         return l;
     }
 
-    public void f(int n) {
+    public void f(long n) {
         for (long i = 1; i < n; i *= 2) {
             l += i;
         }

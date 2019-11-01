@@ -10,7 +10,7 @@ public class Algorithm1 extends Algorithm {
         return l;
     }
 
-    public void f(int n) {
+    public void f(long n) {
         l = n;
     }
 

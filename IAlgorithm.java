@@ -1,7 +1,7 @@
 public interface IAlgorithm {
     String getName();
 
-    void f(int n);
+    void f(long n);
 
     long getL();
 

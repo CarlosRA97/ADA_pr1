@@ -10,11 +10,11 @@ public class Algorithm2N extends Algorithm {
         return l;
     }
 
-    public void f(int n) {
+    public void f(long n) {
         l = aux(n);
     }
 
-    private int aux(int n) {
+    private long aux(long n) {
         return (n < 2) ? n : aux(n - 1) + aux(n - 2);
     }
 

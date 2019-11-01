@@ -1,7 +1,7 @@
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-class Config {
+class Config <T> {
 
     private String[] args;
     private List<String> log;
@@ -29,14 +29,10 @@ class Config {
         for (int i = 0; i < args.length; i++) {
             switch (args[i].toLowerCase()) {
                 case "-l":
-                    cfg.put(args[i], new CfgArguments(true));
-                    break;
                 case "-t":
                     cfg.put(args[i], new CfgArguments(true));
                     break;
                 case "-n":
-                    cfg.put(args[i], new CfgArguments<>(true, getArguments(i)));
-                    break;
                 case "-1":
                     cfg.put(args[i], new CfgArguments<>(true, getArguments(i)));
                     break;
@@ -61,15 +57,16 @@ class Config {
         return cfg.containsKey(arg) && cfg.get(arg).enabled;
     }
 
-    List arguments(String arg) {
+    @SuppressWarnings("unchecked")
+    List<T> arguments(String arg) {
         if (cfg.containsKey(arg)) {
-            return cfg.get(arg).args;
+            return (cfg.get(arg).args);
         } else {
             return null;
         }
     }
 
-    Object argument(String arg) {
+    T argument(String arg) {
         return arguments(arg).get(0);
     }
 
@@ -79,6 +76,10 @@ class Config {
 
     void writeLog(String line, logType type) {
         writeLog(line, type, null);
+    }
+
+    void writeLog(String line, List<String> list) {
+        writeLog(line, logType.INFO, list);
     }
 
     void writeLog(String line, logType type, List<String> list) {
@@ -108,6 +109,22 @@ class Config {
         return sb.toString();
     }
 
+    static List<String> longToString(List<Long> list) {
+        List<String> newList = new LinkedList<>();
+        for (Long n : list) {
+            newList.add(String.valueOf(n));
+        }
+        return newList;
+    }
+
+    static List<String> doubleToString(List<Double> list) {
+        List<String> newList = new LinkedList<>();
+        for (Double n : list) {
+            newList.add(String.valueOf(n));
+        }
+        return newList;
+    }
+
     public enum logType {INFO, ERROR, SYSTEM}
 
     private static class CfgArguments<T> {
@@ -118,10 +135,11 @@ class Config {
             this.enabled = enabled;
         }
 
+
         @SafeVarargs
         CfgArguments(boolean enabled, T... args) {
             this(enabled);
-            this.args = new LinkedList<T>();
+            this.args = new LinkedList<>();
             this.args.addAll(Arrays.asList(args));
         }
     }

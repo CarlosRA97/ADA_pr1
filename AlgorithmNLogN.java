@@ -10,9 +10,9 @@ public class AlgorithmNLogN extends Algorithm {
         return l;
     }
 
-    public void f(int n) {
+    public void f(long n) {
         for (long i = 1; i <= n; i++) {
-            for (long j = 1; j < 8; j *= 2) {
+            for (long j = 1; j < n; j *= 2) {
                 l += i + j;
             }
         }
