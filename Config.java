@@ -85,7 +85,7 @@ class Config <T> {
     void writeLog(String line, logType type, List<String> list) {
         Date now = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("[dd/MM/yy HH:mm:ss,S]\t- ");
-        StringBuilder sb = new StringBuilder(sdf.format(now) + line);
+        StringBuilder sb = new StringBuilder("[" + type.name() + "]" + sdf.format(now) + line);
         if (list != null) {
             for (String elem : list) {
                 sb.append("\t - ").append(elem);

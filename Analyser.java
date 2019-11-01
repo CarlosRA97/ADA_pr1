@@ -49,7 +49,6 @@ class Analyser {
                 range.add(10000000L);
             } else if (attempt == 2) {      // Comprobar rango [n^2, n^3]
                 range.add(100L);
-                range.add(1000L);
             }
 
 
@@ -122,10 +121,8 @@ class Analyser {
 
         double error = 0.05;
 
-        boolean end = false;
-
         // Run this 5 times
-        for (int i = 0; i < 3 && !end; i++) {
+        for (int i = 0; i < 3; i++) {
             ratios.clear();
 
             for (long n : range) {
@@ -138,10 +135,8 @@ class Analyser {
                     value = futureValue.get(2, TimeUnit.SECONDS);
 
                 } catch (TimeoutException e) {
-                    System.out.println("TIMEOUT");
-                    end = true;
-                } catch (Exception ignored) {
-                }
+                    cfg.writeLog("TIMEOUT", Config.logType.ERROR);
+                } catch (Exception ignored) { }
 
                 thread.shutdownNow();
 
@@ -157,12 +152,14 @@ class Analyser {
                     futureValue.cancel(true);
 
 
+
                     if (attempt < 3) {
                         attempt++;
                         range = SetUpRange(attempt);
                         cfg.writeLog("Trying again with new n's: " + range);
                         cfg.writeLog("Attempt: " + attempt);
                         ratio = calculate(algorithm, range, attempt);
+                        return ratio;
                     }
 
                 }
@@ -170,25 +167,24 @@ class Analyser {
 
             }
 
-            if (!end) {
-                ratio = mean(ratios);
-                finalRatios.add(ratio);
 
-                System.out.println(ratio);
+            ratio = mean(ratios);
+            finalRatios.add(ratio);
 
-            } else {
-                if (attempt > 3) {
-                    finalRatio = -2;
-                }
-            }
+            System.out.println(ratio);
+
+
 
         }
 
-        if (!end) {
-            finalRatio = mean(finalRatios) - error;
-
-            System.out.println("valor obtenido: " + finalRatio);
+        if (attempt == 2) {                 // El primer valor es siempre muy alto en el intento 2
+            finalRatios.remove(0);
         }
+
+        finalRatio = mean(finalRatios) - error;
+
+        System.out.println("valor obtenido: " + finalRatio);
+
 
 
 
