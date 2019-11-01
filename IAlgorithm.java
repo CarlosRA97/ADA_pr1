@@ -9,5 +9,9 @@ public interface IAlgorithm {
 
     void setRatio(double ratio);
 
+    int getAttempts();
+
+    void incrementAttempts();
+
     String toString();
 }

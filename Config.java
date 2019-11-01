@@ -63,6 +63,12 @@ class Config <T> {
         return cfg.containsKey(arg) && cfg.get(arg).enabled;
     }
 
+    void disable(String arg) {
+        if (cfg.get(arg) != null) {
+            cfg.get(arg).enabled = false;
+        }
+    }
+
     @SuppressWarnings("unchecked")
     List<T> arguments(String arg) {
         if (cfg.containsKey(arg)) {
@@ -99,11 +105,11 @@ class Config <T> {
     void writeLog(String line, logType type, List<String> list) {
         Date now = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("[dd/MM/yy HH:mm:ss,S]");
-        StringBuilder sb = new StringBuilder(sdf.format(now) + "\t[" + type.name() + "]" + (type == logType.SYSTEM ? "" : "\t") + "\t - " + line);
+        StringBuilder sb = new StringBuilder(sdf.format(now) + "\t[" + type.name() + "]" + (type == logType.SYSTEM ? "" : "\t") + " - " + line);
 
         if (list != null) {
             for (String elem : list) {
-                sb.append("\t - ").append(elem);
+                sb.append("\t\t\t\t\t - ").append(elem);
                 if (!elem.equalsIgnoreCase(list.get(list.size()-1))) {
                     sb.append('\n');
                 }
@@ -149,7 +155,6 @@ class Config <T> {
         CfgArguments(boolean enabled) {
             this.enabled = enabled;
         }
-
 
         @SafeVarargs
         CfgArguments(boolean enabled, T... args) {
