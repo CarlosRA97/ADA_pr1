@@ -23,15 +23,17 @@ class Config <T> {
             -t : Ejecuta todas las pruebas de todos los algoritmos conocidos
             -n : 'n' que se utiliza para realizar la prueba
             -1 <algoritmo, ...> : Selecciona el/los algoritmos a ejecutar
+            -log : Muestra el log completo final al acabar
 
      */
     private void loadSettings() {
         for (int i = 0; i < args.length; i++) {
             switch (args[i].toLowerCase()) {
-                case "-l":
+                case "-log":
                 case "-t":
                     cfg.put(args[i], new CfgArguments(true));
                     break;
+                case "-l":
                 case "-n":
                 case "-1":
                     cfg.put(args[i], new CfgArguments<>(true, getArguments(i)));
@@ -45,12 +47,16 @@ class Config <T> {
     }
 
     private int auxCheckArg(String[] args, int index) {
-        for (int i = index + 1; i < args.length; i++) {
-            if (args[i].contains("-")) {
-                return i;
+        if (args != null) {
+            for (int i = index + 1; i < args.length; i++) {
+                if (args[i].contains("-")) {
+                    return i;
+                }
             }
+            return args.length;
+        } else {
+            return 0;
         }
-        return args.length;
     }
 
     boolean enabled(String arg) {
@@ -67,7 +73,15 @@ class Config <T> {
     }
 
     T argument(String arg) {
-        return arguments(arg).get(0);
+        if (arguments(arg) == null) {
+            return null;
+        } else {
+            try {
+                return arguments(arg).get(0);
+            } catch (IndexOutOfBoundsException e) {
+                return null;
+            }
+        }
     }
 
     void writeLog(String line) {
@@ -84,8 +98,9 @@ class Config <T> {
 
     void writeLog(String line, logType type, List<String> list) {
         Date now = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("[dd/MM/yy HH:mm:ss,S]\t- ");
-        StringBuilder sb = new StringBuilder("[" + type.name() + "]" + sdf.format(now) + line);
+        SimpleDateFormat sdf = new SimpleDateFormat("[dd/MM/yy HH:mm:ss,S]");
+        StringBuilder sb = new StringBuilder(sdf.format(now) + "\t[" + type.name() + "]" + (type == logType.SYSTEM ? "" : "\t") + "\t - " + line);
+
         if (list != null) {
             for (String elem : list) {
                 sb.append("\t - ").append(elem);
@@ -96,7 +111,7 @@ class Config <T> {
         }
         log.add(sb.toString());
 
-        if (enabled("-l") && (type == logType.INFO || type == logType.ERROR)) {
+        if (enabled("-l") && (type == logType.INFO || (type == logType.ERROR && argument("-l") != null))) {
             System.out.println(sb.toString());
         }
     }

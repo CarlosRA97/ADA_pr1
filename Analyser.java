@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -20,13 +19,13 @@ class Analyser {
             return "LOGN";
         } else if (ratio >= 0.55 && ratio < 1.65) {
             return "N";
-        } else if (ratio >= 1.65 && ratio < 2) {
+        } else if (ratio >= 1.65 && ratio < 2.12) {
             return "NLOGN";
-        } else if (ratio >= 2 && ratio < 4.1) {
+        } else if (ratio >= 2.12 && ratio < 4.1) {
             return "N2";
-        } else if (ratio >= 4.1 && ratio < 8.2) {
+        } else if (ratio >= 4.1 && ratio < 8.6) {
             return "N3";
-        } else if (ratio >= 8.2 && ratio < 520) {
+        } else if (ratio >= 8.6 && ratio < 520) {
             return "2N";
         } else {
             return "NF";
@@ -49,8 +48,12 @@ class Analyser {
                 range.add(10000000L);
             } else if (attempt == 2) {      // Comprobar rango [n^2, n^3]
                 range.add(100L);
+                range.add(150L);
+                range.add(200L);
+            } else if (attempt == 3) {      // Comprobar rango [2^n, nf]
+                range.add(10L);
+                range.add(15L);
             }
-
 
             return range;
         }
@@ -68,12 +71,12 @@ class Analyser {
             list.add(new AlgorithmN3());
             list.add(new Algorithm2N());
             list.add(new AlgorithmNF());
+        } else {
+            list.add(new AlgorithmUnknown());
         }
 
         if (cfg.enabled("-1")) {
             list = Algorithm.intersection((List<String>) cfg.arguments("-1"), list);
-        } else {
-            list.add(new AlgorithmUnknown());
         }
 
         cfg.writeLog("Loaded algorithms: \n", Config.logType.SYSTEM, Algorithm.toStringList(list));
@@ -88,7 +91,7 @@ class Analyser {
 
         for (IAlgorithm algorithm : algorithms) {
             algorithm.setRatio(startCalc(algorithm, SetUpRange(1)));
-            cfg.writeLog("[" + algorithm.toString() + "] ratio: " + algorithm.getRatio());
+            cfg.writeLog("[" + algorithm.toString() + "] ratio: " + algorithm.getRatio() + " ==> {" + closer(algorithm.getRatio()) + "}");
         }
 
 
@@ -96,14 +99,17 @@ class Analyser {
             System.out.println(closer(algorithms.get(0).getRatio()));
         }
 
+        cfg.writeLog("Finished", Config.logType.SYSTEM);
 
+        if (cfg.enabled("-log")) {
+            System.out.println(cfg.readFullLog());
+        }
         System.exit(0);
-//        System.out.println(cfg.readFullLog());
     }
 
-    @SuppressWarnings("unchecked")
+
     private double startCalc(IAlgorithm algorithm, List<Long> range) {
-        cfg.writeLog("Using n's range of: " + range);
+        cfg.writeLog("Using n's range of: " + range, Config.logType.SYSTEM);
         cfg.writeLog("Trying to get ratio of : " + algorithm.toString());
 
 
@@ -116,8 +122,8 @@ class Analyser {
         List<Double> ratios = new ArrayList<>();
         List<Double> finalRatios = new ArrayList<>();
 
-        double ratio = 0.0;
-        double finalRatio = 0.0;
+        double ratio;
+        double finalRatio;
 
         double error = 0.05;
 
@@ -136,7 +142,11 @@ class Analyser {
 
                 } catch (TimeoutException e) {
                     cfg.writeLog("TIMEOUT", Config.logType.ERROR);
-                } catch (Exception ignored) { }
+                    if (attempt == 3) {
+                        return Double.MAX_VALUE;
+                    }
+                } catch (Exception ignored) {
+                }
 
                 thread.shutdownNow();
 
@@ -146,34 +156,31 @@ class Analyser {
 
                     try {
                         Thread.sleep(300);
-                    } catch (InterruptedException ignored) {}
+                    } catch (InterruptedException ignored) {
+                    }
 
                 } else {
                     futureValue.cancel(true);
 
 
-
                     if (attempt < 3) {
                         attempt++;
                         range = SetUpRange(attempt);
-                        cfg.writeLog("Trying again with new n's: " + range);
-                        cfg.writeLog("Attempt: " + attempt);
+                        cfg.writeLog("Trying again with new n's: " + range, Config.logType.SYSTEM);
+                        cfg.writeLog("Attempt: " + attempt, Config.logType.SYSTEM);
+
                         ratio = calculate(algorithm, range, attempt);
                         return ratio;
                     }
 
                 }
 
-
             }
-
 
             ratio = mean(ratios);
             finalRatios.add(ratio);
 
-            System.out.println(ratio);
-
-
+            cfg.writeLog("[" + algorithm.toString() + "] [Loop:" + i + "] Ratio: " + ratio, Config.logType.SYSTEM);
 
         }
 
@@ -182,11 +189,6 @@ class Analyser {
         }
 
         finalRatio = mean(finalRatios) - error;
-
-        System.out.println("valor obtenido: " + finalRatio);
-
-
-
 
         return finalRatio;
     }
@@ -198,18 +200,6 @@ class Analyser {
         }
 
         return sum / list.size();
-    }
-
-    private double minValue(List<Double> list) {
-        if (list == null || list.size() == 0) {
-            return Double.MAX_VALUE;
-        }
-
-        List<Double> sortedlist = new ArrayList<>(list);
-
-        Collections.sort(sortedlist);
-
-        return sortedlist.get(0);
     }
 
     private double getRatio(long n, IAlgorithm algorithm) {
@@ -228,8 +218,5 @@ class Analyser {
         t2 = t.tiempoPasado();
         return (double) t2 / t1;
     }
-
-
-    // https://www.codejava.net/java-core/concurrency/java-concurrency-executing-value-returning-tasks-with-callable-and-future
 
 }
