@@ -30,6 +30,7 @@ class Config <T> {
     private void loadSettings() {
         for (int i = 0; i < args.length; i++) {
             switch (args[i].toLowerCase()) {
+                case "-x":
                 case "-7":
                 case "-log":
                 case "-t":

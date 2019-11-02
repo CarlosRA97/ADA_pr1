@@ -54,6 +54,7 @@ class Analyser {
                 range.add(200L);
             } else if (attempt == 2) {      // Comprobar rango [2^n, nf]
                 range.add(10L);
+                range.add(15L);
             }
 
             return range;
@@ -91,12 +92,12 @@ class Analyser {
 
 
         for (IAlgorithm algorithm : algorithms) {
-            algorithm.setRatio(startCalc(algorithm, SetUpRange(-1)));
+            algorithm.setRatio(startCalc(algorithm, SetUpRange(algorithm.getAttempts())));
             cfg.writeLog("[" + algorithm.toString() + "] ratio: " + algorithm.getRatio() + " ==> {" + closer(algorithm.getRatio()) + "}");
         }
 
 
-        if (!cfg.enabled("-t") && !cfg.enabled("-1") || cfg.enabled("-7")) {
+        if ((!cfg.enabled("-t") && !cfg.enabled("-1")) && !cfg.enabled("-x")) {
 
             String result = closer(algorithms.get(0).getRatio());
 
@@ -168,7 +169,7 @@ class Analyser {
 
                 Double value = null;
                 try {
-                    value = futureValue.get(500, TimeUnit.MILLISECONDS);
+                    value = futureValue.get(2000, TimeUnit.MILLISECONDS);
 
                     // Stakoverflowerror porque la pila de java no aguanta la funcion recursiva de 2^n, por lo que lo trato igual que el timeout
                 } catch (TimeoutException | ExecutionException e) {
@@ -182,18 +183,21 @@ class Analyser {
                     break;
                 }
 
+
+                thread.shutdown();
+
                 if (value != null && !futureValue.isCancelled()) {
                     ratio = value;
+
                     ratios.add(ratio);
+
 
                     try {
                         // Si no se espera salen valores muy altos
-                        Thread.sleep(300);
+                        Thread.sleep(500);
                     } catch (InterruptedException ignored) {
                     }
                 }
-
-                thread.shutdown();
             }
 
             if (timeout) {
