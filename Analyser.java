@@ -42,15 +42,15 @@ class Analyser {
             return range;
         } else {
 
-            if (attempt == 1) {             // Comprobar rango [1, nlogn]
+            if (attempt == 0) {             // Comprobar rango [1, nlogn]
                 range.add(100000L);
                 range.add(1000000L);
                 range.add(10000000L);
-            } else if (attempt == 2) {      // Comprobar rango [n^2, n^3]
+            } else if (attempt == 1) {      // Comprobar rango [n^2, n^3]
                 range.add(100L);
                 range.add(150L);
                 range.add(200L);
-            } else if (attempt == 3) {      // Comprobar rango [2^n, nf]
+            } else if (attempt == 2) {      // Comprobar rango [2^n, nf]
                 range.add(10L);
                 range.add(15L);
             }
@@ -90,7 +90,7 @@ class Analyser {
 
 
         for (IAlgorithm algorithm : algorithms) {
-            algorithm.setRatio(startCalc(algorithm, SetUpRange(1)));
+            algorithm.setRatio(startCalc(algorithm, SetUpRange(0)));
             cfg.writeLog("[" + algorithm.toString() + "] ratio: " + algorithm.getRatio() + " ==> {" + closer(algorithm.getRatio()) + "}");
         }
 
@@ -113,21 +113,26 @@ class Analyser {
         cfg.writeLog("Trying to get ratio of : " + algorithm.toString());
 
 
-        return calculate(algorithm, range, 1);
+        // TODO HERE
+
+        calculate(algorithm, range);
+
+
+        return algorithm.getRatio();
     }
 
-    private double calculate(IAlgorithm algorithm, List<Long> range, int attempt) {
+    private void calculate(IAlgorithm algorithm, List<Long> range) {
 
 
         List<Double> ratios = new ArrayList<>();
         List<Double> finalRatios = new ArrayList<>();
 
         double ratio;
-        double finalRatio;
+        final double error = 0.05;
 
-        double error = 0.05;
+        boolean timeout = false;
 
-        // Run this 5 times
+        // Ejecutar varias veces
         for (int i = 0; i < 3; i++) {
             ratios.clear();
 
@@ -140,12 +145,13 @@ class Analyser {
                 try {
                     value = futureValue.get(2, TimeUnit.SECONDS);
 
-                } catch (TimeoutException e) {
+                } catch (TimeoutException | ExecutionException e) {     // Stakoverflowerror porque la pila de java no aguanta la funcion recursiva, por lo que lo trato igual que el timeout
                     cfg.writeLog("TIMEOUT", Config.logType.ERROR);
-                    if (attempt == 3) {
-                        return Double.MAX_VALUE;
-                    }
-                } catch (Exception ignored) {
+                    timeout = true;
+                    break;
+                } catch (Exception e) {
+                    cfg.writeLog(e.toString(), Config.logType.ERROR);
+                    break;
                 }
 
                 thread.shutdownNow();
@@ -158,39 +164,37 @@ class Analyser {
                         Thread.sleep(300);
                     } catch (InterruptedException ignored) {
                     }
-
                 } else {
                     futureValue.cancel(true);
-
-
-                    if (attempt < 3) {
-                        attempt++;
-                        range = SetUpRange(attempt);
-                        cfg.writeLog("Trying again with new n's: " + range, Config.logType.SYSTEM);
-                        cfg.writeLog("Attempt: " + attempt, Config.logType.SYSTEM);
-
-                        ratio = calculate(algorithm, range, attempt);
-                        return ratio;
-                    }
-
                 }
-
             }
 
-            ratio = mean(ratios);
-            finalRatios.add(ratio);
+            if (timeout) {
+                algorithm.incrementAttempts();
+                if (algorithm.getAttempts() <= 2) {
+                    cfg.writeLog("Attempt: " + (algorithm.getAttempts() + 1));
+                    cfg.writeLog("Trying with new range: " + SetUpRange(algorithm.getAttempts()));
+                    calculate(algorithm, SetUpRange(algorithm.getAttempts()));
+                    break;
+                } else {
+                    cfg.writeLog("More than 3 attempts", Config.logType.ERROR);
+                    algorithm.setRatio(Double.MAX_VALUE);
+                    break;
+                }
 
-            cfg.writeLog("[" + algorithm.toString() + "] [Loop:" + i + "] Ratio: " + ratio, Config.logType.SYSTEM);
+            } else {
+                ratio = mean(ratios);
+                finalRatios.add(ratio);
 
+                cfg.writeLog("[" + algorithm.toString() + "] [Loop:" + i + "] Ratio: " + ratio, Config.logType.SYSTEM);
+            }
         }
 
-        if (attempt == 2) {                 // El primer valor es siempre muy alto en el intento 2
-            finalRatios.remove(0);
+        if (!timeout) {
+            algorithm.setRatio(mean(finalRatios) - error);
         }
 
-        finalRatio = mean(finalRatios) - error;
 
-        return finalRatio;
     }
 
     private double mean(List<Double> list) {
