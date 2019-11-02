@@ -10,6 +10,7 @@ public interface IAlgorithm {
     void setRatio(double ratio);
 
     int getAttempts();
+    void setAttempts(int attempts);
 
     void incrementAttempts();
 

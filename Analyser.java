@@ -15,11 +15,11 @@ class Analyser {
     private String closer(double ratio) {
         if (ratio < 0.2) {
             return "1";
-        } else if (ratio >= 0.2 && ratio < 0.55) {
+        } else if (ratio >= 0.2 && ratio < 0.45) {
             return "LOGN";
-        } else if (ratio >= 0.55 && ratio < 1.65) {
+        } else if (ratio >= 0.45 && ratio < 1.85) {
             return "N";
-        } else if (ratio >= 1.65 && ratio < 2.12) {
+        } else if (ratio >= 1.85 && ratio < 2.12) {
             return "NLOGN";
         } else if (ratio >= 2.12 && ratio < 4.1) {
             return "N2";
@@ -41,8 +41,10 @@ class Analyser {
             }
             return range;
         } else {
-
-            if (attempt == 0) {             // Comprobar rango [1, nlogn]
+            if (attempt == -1) {
+                range.add(40L);
+                range.add(100L);
+            } else if (attempt == 0) {             // Comprobar rango [1, nlogn]
                 range.add(100000L);
                 range.add(1000000L);
                 range.add(10000000L);
@@ -52,7 +54,6 @@ class Analyser {
                 range.add(200L);
             } else if (attempt == 2) {      // Comprobar rango [2^n, nf]
                 range.add(10L);
-                range.add(15L);
             }
 
             return range;
@@ -90,13 +91,20 @@ class Analyser {
 
 
         for (IAlgorithm algorithm : algorithms) {
-            algorithm.setRatio(startCalc(algorithm, SetUpRange(0)));
+            algorithm.setRatio(startCalc(algorithm, SetUpRange(-1)));
             cfg.writeLog("[" + algorithm.toString() + "] ratio: " + algorithm.getRatio() + " ==> {" + closer(algorithm.getRatio()) + "}");
         }
 
 
-        if (!cfg.enabled("-t") && !cfg.enabled("-1")) {
-            System.out.println(closer(algorithms.get(0).getRatio()));
+        if (!cfg.enabled("-t") && !cfg.enabled("-1") || cfg.enabled("-7")) {
+
+            String result = closer(algorithms.get(0).getRatio());
+
+            if (result.equals("NF")) {
+                nfSietteParcialFix(algorithms.get(0));
+            } else {
+                System.out.println(result);
+            }
         }
 
         cfg.writeLog("Finished", Config.logType.SYSTEM);
@@ -112,17 +120,34 @@ class Analyser {
         cfg.writeLog("Using n's range of: " + range, Config.logType.SYSTEM);
         cfg.writeLog("Trying to get ratio of : " + algorithm.toString());
 
-
-        // TODO HERE
-
         calculate(algorithm, range);
-
 
         return algorithm.getRatio();
     }
 
+    private void nfSietteParcialFix(IAlgorithm algorithm) {
+//        cfg.disable("-n");
+
+        algorithm.setRatio(0.0);
+
+        algorithm.setAttempts(2);
+        List<Long> range = SetUpRange(2);
+        cfg.writeLog("LAST ATTEMPT: " + range, Config.logType.SYSTEM);
+
+        calculate(algorithm, range);
+
+        String finalResult = closer(algorithm.getRatio());
+
+        if (finalResult.equals("NF")) {
+            finalResult = "2N";
+        }
+
+        System.out.println(finalResult);
+    }
+
     private void calculate(IAlgorithm algorithm, List<Long> range) {
 
+        algorithm.setRatio(0);
 
         List<Double> ratios = new ArrayList<>();
         List<Double> finalRatios = new ArrayList<>();
@@ -143,30 +168,32 @@ class Analyser {
 
                 Double value = null;
                 try {
-                    value = futureValue.get(2, TimeUnit.SECONDS);
+                    value = futureValue.get(500, TimeUnit.MILLISECONDS);
 
-                } catch (TimeoutException | ExecutionException e) {     // Stakoverflowerror porque la pila de java no aguanta la funcion recursiva, por lo que lo trato igual que el timeout
+                    // Stakoverflowerror porque la pila de java no aguanta la funcion recursiva de 2^n, por lo que lo trato igual que el timeout
+                } catch (TimeoutException | ExecutionException e) {
+                    futureValue.cancel(true);
                     cfg.writeLog("TIMEOUT", Config.logType.ERROR);
                     timeout = true;
                     break;
                 } catch (Exception e) {
                     cfg.writeLog(e.toString(), Config.logType.ERROR);
+//                    timeout = true;
                     break;
                 }
 
-                thread.shutdownNow();
-
-                if (value != null) {
+                if (value != null && !futureValue.isCancelled()) {
                     ratio = value;
                     ratios.add(ratio);
 
                     try {
+                        // Si no se espera salen valores muy altos
                         Thread.sleep(300);
                     } catch (InterruptedException ignored) {
                     }
-                } else {
-                    futureValue.cancel(true);
                 }
+
+                thread.shutdown();
             }
 
             if (timeout) {
@@ -176,7 +203,7 @@ class Analyser {
                     cfg.writeLog("Trying with new range: " + SetUpRange(algorithm.getAttempts()));
                     calculate(algorithm, SetUpRange(algorithm.getAttempts()));
                     break;
-                } else {
+                } else if (algorithm.getAttempts() >= 3) {
                     cfg.writeLog("More than 3 attempts", Config.logType.ERROR);
                     algorithm.setRatio(Double.MAX_VALUE);
                     break;

@@ -3,7 +3,7 @@ import java.util.List;
 
 abstract class Algorithm implements IAlgorithm {
     private double ratio;
-    private int attempts = 0;
+    private int attempts = -1;
 
     static List<String> toStringList(List<IAlgorithm> list) {
         List<String> newList = new LinkedList<>();
@@ -23,6 +23,10 @@ abstract class Algorithm implements IAlgorithm {
         }
 
         return list;
+    }
+
+    public void setAttempts(int attempts) {
+        this.attempts = attempts;
     }
 
     public int getAttempts() {

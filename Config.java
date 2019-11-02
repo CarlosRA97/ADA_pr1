@@ -24,11 +24,13 @@ class Config <T> {
             -n : 'n' que se utiliza para realizar la prueba
             -1 <algoritmo, ...> : Selecciona el/los algoritmos a ejecutar
             -log : Muestra el log completo final al acabar
+            -7 : Simula que esta en 7 para probar
 
      */
     private void loadSettings() {
         for (int i = 0; i < args.length; i++) {
             switch (args[i].toLowerCase()) {
+                case "-7":
                 case "-log":
                 case "-t":
                     cfg.put(args[i], new CfgArguments(true));
